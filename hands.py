@@ -45,7 +45,9 @@ start = 0
 end = 0
 
 def evaluate(hand_cards, length, original_length):
+    
     probability = 0
+    
     if length > len(hand_cards):
         
         if len(hand_cards) == 4:
@@ -64,8 +66,8 @@ def evaluate(hand_cards, length, original_length):
 
     if length == len(hand_cards):
         probability = evaluator.evaluate(hand_cards[0:2], hand_cards[2:len(hand_cards)])    
-
-    if length == original_length:
+    
+    if len(hand_cards) == original_length:
         return (hand_cards, probability)
     else:
         return probability
@@ -87,7 +89,8 @@ output = [p.get() for p in results]
 potentials = {}
 
 for result in output:
-    potentials[result[0]] = result[1]
+    print(result)
+    potentials[Card.print_pretty_cards(result[0])] = result[1]
 
 with open('potentials.txt', 'w') as outfile:
     json.dump(potentials, outfile)
