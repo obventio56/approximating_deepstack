@@ -2,6 +2,7 @@ import hand_ranker
 import bisect
 import itertools
 import time
+import multiprocessing
 from deuces import Card, Evaluator
 
 cards = ['2s', '2c', '2d', '2h', '3s', '3c', '3d', '3h', '4s', '4c', '4d', '4h', '5s', '5c', '5d', '5h', '6s', '6c', '6d', '6h', '7s', '7c', '7d', '7h', '8s', '8c', '8d', '8h', '9s', '9c', '9d', '9h', 'Ts', 'Tc', 'Td', 'Th', 'Js', 'Jc', 'Jd', 'Jh', 'Qs', 'Qc', 'Qd', 'Qh', 'Ks', 'Kc', 'Kd', 'Kh', 'As', 'Ac', 'Ad', 'Ah']
@@ -42,7 +43,7 @@ def order_cards(hand_cards, cards):
 start = 0
 end = 0
 
-def evaluate(hand_cards, length):
+def evaluate(hand_cards, length, original_length):
     probability = 0
     if length > len(hand_cards):
         
@@ -53,24 +54,38 @@ def evaluate(hand_cards, length):
                 
         for card in cards:  
             if card not in hand_cards:
-                probability += (1/float(52 - len(hand_cards)))*evaluate(hand_cards + [card], length)
+                probability += (1/float(52 - len(hand_cards)))*evaluate(hand_cards + [card], length, original_length)
                 
         if len(hand_cards) == 4:
             end = time.time()
             print(end - start)
+            
 
     if length == len(hand_cards):
-        probability = evaluator.evaluate(hand_cards[0:2], hand_cards[2:-1])
-        
-            
-    return probability
+        probability = evaluator.evaluate(hand_cards[0:2], hand_cards[2:len(hand_cards)])    
 
+    if length == original_length:
+        return (hand_cards, probability)
+    else:
+        return probability
 
 
 #hands_lookup = init_lookup("hands.txt")
 #flops_lookup = init_lookup("flops.txt")
+pool = multiprocessing.Pool(processes=2)
+results = []
 
-print(evaluate([Card.new("Ts"), Card.new("9h")], 7))
+with open ("hands.txt", "r") as f:
+    hands = f.read().split(",")
+    for hand in hands:
+        deuces_hand = [Card.new(card) for card in hand.split(" ")]
+        results.append(pool.apply_async(evaluate, args=(deuces_hand, 7, 2)))
+        
+output = [p.get() for p in results]
+
+print(output)
+
+#print(evaluate([Card.new("Ts"), Card.new("9h")], 7, 2))
     
 
 
