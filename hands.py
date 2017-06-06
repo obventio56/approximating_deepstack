@@ -4,6 +4,7 @@ import itertools
 import time
 import multiprocessing
 from deuces import Card, Evaluator
+import json
 
 cards = ['2s', '2c', '2d', '2h', '3s', '3c', '3d', '3h', '4s', '4c', '4d', '4h', '5s', '5c', '5d', '5h', '6s', '6c', '6d', '6h', '7s', '7c', '7d', '7h', '8s', '8c', '8d', '8h', '9s', '9c', '9d', '9h', 'Ts', 'Tc', 'Td', 'Th', 'Js', 'Jc', 'Jd', 'Jh', 'Qs', 'Qc', 'Qd', 'Qh', 'Ks', 'Kc', 'Kd', 'Kh', 'As', 'Ac', 'Ad', 'Ah']
 
@@ -75,7 +76,7 @@ def evaluate(hand_cards, length, original_length):
 pool = multiprocessing.Pool(processes=2)
 results = []
 
-with open ("hands.txt", "r") as f:
+with open ("test_hands.txt", "r") as f:
     hands = f.read().split(",")
     for hand in hands:
         deuces_hand = [Card.new(card) for card in hand.split(" ")]
@@ -83,6 +84,14 @@ with open ("hands.txt", "r") as f:
         
 output = [p.get() for p in results]
 
+potentials = {}
+
+for result in output:
+    potentials[result[0]] = result[1]
+
+with open('potentials.txt', 'w') as outfile:
+    json.dump(potentials, outfile)
+    
 print(output)
 
 #print(evaluate([Card.new("Ts"), Card.new("9h")], 7, 2))
