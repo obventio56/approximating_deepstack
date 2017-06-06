@@ -12,11 +12,14 @@ cards = ['2s', '2c', '2d', '2h', '3s', '3c', '3d', '3h', '4s', '4c', '4d', '4h',
 cards = [Card.new(card) for card in cards]
 evaluator = Evaluator()
 
+times = []
+
 def evaluate(hand_cards, length, original_length):
     
     if len(hand_cards) == original_length:
         print("Start: " + Card.print_pretty_cards(hand_cards))
-
+        times.append(time.time())
+        
     strengths = []
     
     if length > len(hand_cards):
@@ -41,7 +44,8 @@ def evaluate(hand_cards, length, original_length):
         standard_deviation = np.sum(np.array(standard_deviation_list)) - mean**2
         
         print("End: " + Card.print_pretty_cards(hand_cards))
-        
+        difference = time.time() - times.pop()
+        print("Time: " + str(difference))
         
         return (hand_cards, mean, standard_deviation)
     else:
