@@ -42,10 +42,10 @@ class Card ():
 
     # for pretty printing
     PRETTY_SUITS = {
-        1 : "\u2660", # spades
-        2 : "\u2764", # hearts
-        4 : "\u2666", # diamonds
-        8 : "\u2663" # clubs
+        1 : "s", # spades
+        2 : "h", # hearts
+        4 : "d", # diamonds
+        8 : "c" # clubs
     }
 
      # hearts and diamonds
@@ -189,7 +189,7 @@ class Card ():
 
         r = Card.STR_RANKS[rank_int]
 
-        return " [ " + r + " " + s + " ] "
+        return r + s
 
     @staticmethod
     def print_pretty_card(card_int):
@@ -203,12 +203,12 @@ class Card ():
         """
         Expects a list of cards in integer form.
         """
-        output = " "
+        output = ""
         for i in range(len(card_ints)):
             c = card_ints[i]
             if i != len(card_ints) - 1:
-                output += Card.int_to_pretty_str(c) + ","
-            else:
                 output += Card.int_to_pretty_str(c) + " "
+            else:
+                output += Card.int_to_pretty_str(c)
     
-        print(output)
+        return output

@@ -89,7 +89,7 @@ output = [p.get() for p in results]
 potentials = {}
 
 for result in output:
-    print(result)
+    print(Card.print_pretty_cards(result[0]))
     potentials[Card.print_pretty_cards(result[0])] = result[1]
 
 with open('potentials.txt', 'w') as outfile:
