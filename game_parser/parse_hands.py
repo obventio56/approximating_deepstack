@@ -12,7 +12,7 @@ def main():
             with open('../ACPC/' + fn) as f:
                 for line in f:
                     print(line)
-                    games.append(game.Game(line))
+                    games.append(game.Game(line, 50, 100))
                 
     pickle.dump( games, open( "../games.p", "wb" ) )
     

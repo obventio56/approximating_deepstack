@@ -3,13 +3,17 @@ import numpy as np
 
 class Game(object):
     
-    def __init__(self, line):
+    def __init__(self, line, small_blind, big_blind):
         
         self.id = 0
         self.flop = []
         self.turn = []
         self.river = []
+        self.small_blind = small_blind
+        self.big_blind = big_blind
+        
         self.parse_acpc(line)
+
         
     def parse_acpc(self, line):
         lineMatch = re.match( r'STATE:(.*) # (.*)', line)
@@ -52,7 +56,10 @@ class Game(object):
             moves = re.findall('[cf]|r[\d]+', group)
             moves1.append(moves[0::2] if moves[0::2] != [] else ['s'])
             moves2.append(moves[1::2] if moves[0::2] != [] else ['s'])
-        
+            
+        moves1[0].insert(0, 'r' + str(self.small_blind))
+        moves2[0].insert(0, 'r' + str(self.big_blind))
+
         return moves1, moves2
     
     def current_standing(self, betting_round, subround):
@@ -75,6 +82,8 @@ class Game(object):
 
         #Determine the round of betting. Make sure both players have moves in that round to avoid range errors. 
         #A raise will never be the last move so this works
+        
+        #if you're tyring to get a round that doesn't exist, make sure 
         if betting_round + 1 > len(player1.moves) or betting_round + 1 > len(player2.moves): subround = 5
         betting_round = min(betting_round + 1, len(player1.moves), len(player2.moves)) - 1
         
@@ -99,7 +108,7 @@ class Game(object):
         print(player2.moves)
         print(flat_player2)
         
-        larger_list = max(len(flat_player1), len(flat_player2))
+        larger_list = max(len(flat_player1), len(flat_player2)) #Ensure you get the larger move set
         
         last_raiser, raises, following_action = 0, [50.0,100.00], 'f' #set raise values to default, blind might change this
         for index in range(0, larger_list):
