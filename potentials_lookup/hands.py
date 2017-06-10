@@ -19,7 +19,7 @@ evaluator = Evaluator()
 times = []
 
 def evaluate(hand_cards, length, original_length):
-    if len(hand_cards) == 4: print("4 Category")
+    if len(hand_cards) == 4: print(Card.print_pretty_cards(hand_cards))
     if len(hand_cards) == original_length:
         print("Start: " + Card.print_pretty_cards(hand_cards))
         times.append(time.time())
@@ -36,7 +36,7 @@ def evaluate(hand_cards, length, original_length):
         strengths.append(evaluator.evaluate(hand_cards[0:2], hand_cards[2:len(hand_cards)])) 
     
     if len(hand_cards) == original_length:
-        
+        print("pre-return calculations")
         probability = 1
         for depth in range(len(hand_cards), length):
             probability *= 1/(float(52 - depth))
@@ -50,7 +50,7 @@ def evaluate(hand_cards, length, original_length):
         print("End: " + Card.print_pretty_cards(hand_cards))
         difference = time.time() - times.pop()
         print("Time: " + str(difference))
-        
+        print("pre-return")
         return (hand_cards, mean, standard_deviation)
     else:
         return strengths
@@ -61,16 +61,22 @@ with open ("../hands.txt", "r") as f:
     hands = f.read().split(",")
     number_of_hand_sets = len(hands)//core_count
     for hand_set in range(0, number_of_hand_sets):
+        
+        potentials = {}
+        with open('../potentials.txt', 'r') as infile:
+            potentials = json.load(infile)
+            
         pool = multiprocessing.Pool(processes=core_count)
         results = []
         for hand in range(hand_set*core_count, (hand_set + 1)*core_count):
+            print(hands[hand])
             deuces_hand = [Card.new(card) for card in hands[hand].split(" ")]
             results.append(pool.apply_async(evaluate, args=(deuces_hand, 7, 2)))
         
         output = [p.get() for p in results]
-
-        potentials = {}
+        print(output)
         for result in output:
+            print(result)
             potentials[Card.print_pretty_cards(result[0])] = [result[1], result[2]]
 
         with open('../potentials.txt', 'w') as outfile:
