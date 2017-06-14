@@ -26,6 +26,10 @@ import game
 
 games = pickle.load( open( "../games.p", "rb" ) )
 
-for game in games:
-    print(game.current_standing(1,1))
+for index, game in enumerate(games):
+    try:
+        print(index)
+        print(game.deepstack.current_standing(4,0))
+    except:
+        pass
 

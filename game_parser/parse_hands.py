@@ -10,9 +10,14 @@ def main():
         if os.path.isfile('../ACPC/' + fn) and fn != '.DS_Store':
             print(fn)
             with open('../ACPC/' + fn) as f:
+                counter = 0
                 for line in f:
+                    print(counter)
+                    counter += 1
                     print(line)
-                    games.append(game.Game(line, 50, 100))
+                    this_game = game.Game(line, 50, 100)
+                    print(this_game.deepstack.moves)
+                    games.append(this_game)
                 
     pickle.dump( games, open( "../games.p", "wb" ) )
     

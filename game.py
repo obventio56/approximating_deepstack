@@ -1,5 +1,6 @@
 import re
 import numpy as np
+import helpers
 
 class Game(object):
     
@@ -20,21 +21,21 @@ class Game(object):
         data = lineMatch.group(1).split(":")
         self.id = int(data[0])
         
-        player1, player2 = re.split('\|', data[4])
+        player2, player1 = re.split('\|', data[4])
         
-        moves2, moves1 = self.parse_moves(data[1])
+        moves1, moves2 = self.parse_moves(data[1])
         
         cards1, cards2, self.flop, self.turn, self.river = return_value = self.parse_cards(data[2], 5)
         
-        agent1 = Agent(cards1, moves1, 0)
-        agent2 = Agent(cards2, moves2, 1)
+        self.player1 = Agent(cards1, moves1, 0, self)
+        self.player2 = Agent(cards2, moves2, 1, self)
         
         if (player1 == 'DeepStack'):
-            self.deepstack = agent1
-            self.other_player = agent2
+            self.deepstack = self.player1
+            self.other_player = self.player2
         else:
-            self.deepstack = agent2
-            self.other_player = agent1
+            self.deepstack = self.player2
+            self.other_player = self.player1
 
     def parse_cards(self, card_string, expected_groups):
         
@@ -57,99 +58,86 @@ class Game(object):
             moves1.append(moves[0::2] if moves[0::2] != [] else ['s'])
             moves2.append(moves[1::2] if moves[0::2] != [] else ['s'])
             
-        moves1[0].insert(0, 'r' + str(self.small_blind))
-        moves2[0].insert(0, 'r' + str(self.big_blind))
+        moves1.insert(0, ['r' + str(self.small_blind)])
+        moves2.insert(0, ['r' + str(self.big_blind)])
 
         return moves1, moves2
-    
-    def current_standing(self, betting_round, subround):
-        pot = 0 #start pot at 0
-          
-        #initiate players in the order of turns (i.e. player1 and player2)
-        players = {}
-        player1 = self.other_player
-        players["other_player"] = player1
-        player2 = self.deepstack
-        players["deepstack"] = player2
-      
-        if self.deepstack.position == 0:
-            player1 = self.deepstack
-            players["deepstack"] = player1
-            player2 = self.other_player
-            players["other_player"] = player2
-            
-        player1.chips, player2.chips = player1.starting_chips, player2.starting_chips #set starting chip amounts
 
-        #Determine the round of betting. Make sure both players have moves in that round to avoid range errors. 
-        #A raise will never be the last move so this works
-        
-        #if you're tyring to get a round that doesn't exist, make sure 
-        if betting_round + 1 > len(player1.moves) or betting_round + 1 > len(player2.moves): subround = 5
-        betting_round = min(betting_round + 1, len(player1.moves), len(player2.moves)) - 1
-        
-        subround = min(subround + 1, len(player1.moves[betting_round]), len(player2.moves[betting_round])) - 1
-
-        print(subround)
-        
-        player1_difference = min(subround - len(player1.moves[betting_round]) + 1, 0) #find the number of sub rounds in the round to leave out 
-        player2_difference = min(subround - len(player2.moves[betting_round]) + 1, 0)
-        
-        print(player1_difference)
-        print(player2_difference)
-        
-        flat_player1 = [move for move_round in player1.moves for move in move_round] #get rid of the round distinctions
-        flat_player2 = [move for move_round in player2.moves for move in move_round] 
-        
-        flat_player1 = flat_player1[0:len(flat_player1) + player1_difference] #trim the unwanted subrounds
-        flat_player2 = flat_player2[0:len(flat_player2) + player2_difference]
-        
-        print(player1.moves)
-        print(flat_player1)
-        print(player2.moves)
-        print(flat_player2)
-        
-        larger_list = max(len(flat_player1), len(flat_player2)) #Ensure you get the larger move set
-        
-        last_raiser, raises, following_action = 0, [50.0,100.00], 'f' #set raise values to default, blind might change this
-        for index in range(0, larger_list):
-            if (len(flat_player1) > index):
-                if flat_player1[index][0] == 'r': #if player 1 raised
-                    raises.append(float(flat_player1[index][1:len(flat_player1[index])])) #add to raise list
-                    if (len(flat_player2) > index):
-                        following_action = flat_player2[index] #find player2's next action (check or fold)
-                    else:
-                        following_action = 'f' #because we don't know
-                    last_raiser = 1 #remember who made this raise
-            if (len(flat_player2) > index):
-                if flat_player2[index][0] == 'r':
-                    raises.append(float(flat_player2[index][1:len(flat_player2[index])]))
-                    if (len(flat_player1) > index + 1):
-                        following_action = flat_player1[index + 1] #check player1's next move (check or fold)
-                    else:
-                        following_action = 'f'
-                    last_raiser = 2
-         
-        #determine how much each player bet
-        if last_raiser == 1: 
-            player1.chips -= raises[-1]
-            if following_action == 'c': player2.chips -= raises[-1]
-            if following_action == 'f': player2.chips -= raises[-2]
-        else:
-            player2.chips -= raises[-1]
-            if following_action == 'c': player1.chips -= raises[-1]
-            if following_action == 'f': player1.chips -= raises[-2]
-
-        #pot from sum of differences of start and end
-        pot = (player1.starting_chips - player1.chips) + (player2.starting_chips - player2.chips) 
-        
-        #return consistant order based on dict created when assigning players to turns
-        return (pot, players["deepstack"].chips, players["other_player"].chips) 
         
     
 class Agent(object):
     
-    def __init__(self, cards, moves, position):
+    def __init__(self, cards, moves, position, game):
         self.starting_chips = 20000
         self.cards = cards
         self.moves = moves
         self.position = position
+        self.game = game
+        
+    def pertinant_moves(self, end_betting_round, end_subround):
+        
+        print(self.moves)
+        if end_betting_round  >= len(self.moves): raise ValueError("Betting round out of range")
+        if end_subround >= len(self.moves[end_betting_round]): raise ValueError("Subround out of range")
+        
+        game = self.game
+          
+        #initiate players in the order of turns (i.e. player1 and player2)
+        player1 = game.player1
+        player2 = game.player2
+        
+                        
+        pertinent_moves = []
+        
+        for betting_round in range(0, end_betting_round):
+            pertinent_moves += helpers.merge_lists(player1.moves[betting_round], player2.moves[betting_round])
+          
+        player1_end_range = end_subround
+        player2_end_range = end_subround + 1
+        
+        if self.position == 0:
+            player2_end_range -= 1
+            
+        print(player1_end_range, player2_end_range)
+                       
+        player1_last_round = player1.moves[end_betting_round][0:player1_end_range]
+        player2_last_round = player2.moves[end_betting_round][0:player2_end_range]
+        
+        pertinent_moves += helpers.merge_lists(player1_last_round, player2_last_round)
+        
+        return pertinent_moves
+        
+    def current_standing(self, end_betting_round, end_subround):
+
+        game = self.game
+        
+        other_player = game.player1
+        if self.position == 0:
+            other_player = game.player2
+        
+        self.chips, other_player.chips = self.starting_chips, other_player.starting_chips #set starting chip amounts
+        
+        pot = 0
+        self_pot = 0
+        other_pot = 0
+        
+        pertinent_moves = self.pertinant_moves(end_betting_round, end_subround)
+        
+        just_raises = [bet_raise for bet_raise in pertinent_moves if bet_raise[0] == "r"]
+        print(pertinent_moves)
+        last_raise = just_raises.pop()
+        second_raise = just_raises.pop()
+        
+        other_pot = int(last_raise[1:len(last_raise)])
+        self_pot = other_pot
+        if (pertinent_moves[-1][0] == "r"):
+            self_pot = int(second_raise[1:len(second_raise)])
+        
+            
+        pot += self_pot + other_pot
+        self.chips -= self_pot
+        other_player.chips -= other_pot
+        
+        return (self.chips, other_player.chips, pot)
+
+                
