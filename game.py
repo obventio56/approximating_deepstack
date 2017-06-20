@@ -76,7 +76,6 @@ class Agent(object):
         
     def pertinant_moves(self, end_betting_round, end_subround):
         
-        print(self.moves)
         if end_betting_round  >= len(self.moves): raise ValueError("Betting round out of range")
         if end_subround >= len(self.moves[end_betting_round]): raise ValueError("Subround out of range")
         
@@ -98,7 +97,6 @@ class Agent(object):
         if self.position == 0:
             player2_end_range -= 1
             
-        print(player1_end_range, player2_end_range)
                        
         player1_last_round = player1.moves[end_betting_round][0:player1_end_range]
         player2_last_round = player2.moves[end_betting_round][0:player2_end_range]
@@ -124,13 +122,12 @@ class Agent(object):
         pertinent_moves = self.pertinant_moves(end_betting_round, end_subround)
         
         just_raises = [bet_raise for bet_raise in pertinent_moves if bet_raise[0] == "r"]
-        print(pertinent_moves)
-        last_raise = just_raises.pop()
-        second_raise = just_raises.pop()
+        last_raise = just_raises.pop() if len(just_raises) > 0 else 'r0'
+        second_raise =  just_raises.pop() if len(just_raises) > 0 else 'r0'
         
         other_pot = int(last_raise[1:len(last_raise)])
         self_pot = other_pot
-        if (pertinent_moves[-1][0] == "r"):
+        if (len(pertinent_moves) > 0 and pertinent_moves[-1][0] == "r"):
             self_pot = int(second_raise[1:len(second_raise)])
         
             
@@ -139,5 +136,47 @@ class Agent(object):
         other_player.chips -= other_pot
         
         return (self.chips, other_player.chips, pot)
+    
+    def aggressiveness(self, end_betting_round, end_subround, rounds_back='begining'):
+        
+        if end_betting_round  >= len(self.moves): raise ValueError("Betting round out of range")
+        if end_subround >= len(self.moves[end_betting_round]): raise ValueError("Subround out of range")    
+        
+        game = self.game 
+        
+        other_player = game.player1
+        if self.position == 0:
+            other_player = game.player2
+            
+        self.agressivness, other_player.agressivness = [], []
+        
+        self_last_bet, other_player_last_bet = 0.0, 0.0
+        
+        for betting_round in range(0, end_betting_round + 1):
+            subrounds = len(self.moves[betting_round])
+            if betting_round == end_betting_round: subrounds = end_subround
+            for subround in range(0, subrounds):
+                print(betting_round, subround)
+                print(self.current_standing(betting_round, subround))
+                
+                self_chips, other_player_chips, pot = self.current_standing(betting_round, subround)
+
+                self_this_bet = self.starting_chips - self_chips - self_last_bet
+                other_player_this_bet = other_player.starting_chips - other_player_chips - other_player_last_bet
+                
+                self_agressivness = self_this_bet/pot if self_this_bet > 0 else 0
+                other_player_agressivness = other_player_this_bet/pot if other_player_this_bet > 0 else 0
+                              
+                self.agressivness.append(self_agressivness)
+                other_player.agressivness.append(other_player_agressivness)
+                
+                self_last_bet_last  = self.starting_chips - self_chips
+                other_player_last_bet = other_player.starting_chips - other_player_chips
+        
+        print(self.agressivness)
+        self.agressivness = np.average(np.array(self.agressivness))
+        other_player.agressivness = np.average(np.array(other_player.agressivness))
+        
+        return self.agressivness, other_player.agressivness
 
                 

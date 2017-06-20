@@ -82,9 +82,12 @@ with open ("../hands.txt", "r") as f:
         for hand in range(hand_set*core_count, (hand_set + 1)*core_count):
             print(hands[hand])
             deuces_hand = [Card.new(card) for card in hands[hand].split(" ")]
-            results.append(pool.apply_async(evaluate, args=(deuces_hand, 6, 2)))
+            results.append(pool.apply_async(evaluate, args=(deuces_hand, 5, 2)))
+        
+        
         
         output = [p.get() for p in results]
+        pool.terminate()
         print(output)
         for result in output:
             print(result)

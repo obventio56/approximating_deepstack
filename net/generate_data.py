@@ -27,9 +27,10 @@ import game
 games = pickle.load( open( "../games.p", "rb" ) )
 
 for index, game in enumerate(games):
+    print(index)
     try:
-        print(index)
-        print(game.deepstack.current_standing(4,0))
+        print(game.deepstack.aggressiveness(4,0))
     except:
         pass
+
 
