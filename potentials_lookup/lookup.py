@@ -5,6 +5,8 @@ import bisect
 import itertools
 import time
 import numpy as np
+import queue
+import threading
 import multiprocessing
 from deuces import Card, Evaluator
 import json
@@ -66,38 +68,42 @@ def evaluate(hand_cards, length, original_length):
         return strengths
 
 
+    
+def worker():
+    while True:
+        this_hand = q.get()
+        result = evaluate(this_hand, 5, 2)
+        print("Result:")
+        print(result)
+        potentials[Card.print_pretty_cards(result[0])] = [result[1], result[2]]
+        q.task_done()
+        
+potentials = {}
+with open('../potentials.txt', 'r') as infile:
+    potentials = json.load(infile)
+    infile.close()
 
 with open ("../hands.txt", "r") as f:
     hands = f.read().split(",")
-    number_of_hand_sets = len(hands)//core_count
-    for hand_set in range(0, number_of_hand_sets):
+    q = queue.Queue()
+    for hand in hands:
+        deuces_hand = [Card.new(card) for card in hand.split(" ")]
+        q.put(deuces_hand)
         
-        potentials = {}
-        with open('../potentials.txt', 'r') as infile:
-            potentials = json.load(infile)
-            infile.close()
+    cpus=multiprocessing.cpu_count() #detect number of cores
+    print("Creating %d threads" % cpus)
+    for i in range(cpus):
+        t = threading.Thread(target=worker)
+        t.daemon = True
+        t.start()
             
-        pool = multiprocessing.Pool(processes=core_count)
-        results = []
-        for hand in range(hand_set*core_count, (hand_set + 1)*core_count):
-            print(hands[hand])
-            deuces_hand = [Card.new(card) for card in hands[hand].split(" ")]
-            results.append(pool.apply_async(evaluate, args=(deuces_hand, 5, 2)))
-        
-        
-        
-        output = [p.get() for p in results]
-        pool.terminate()
-        print(output)
-        for result in output:
-            print(result)
-            potentials[Card.print_pretty_cards(result[0])] = [result[1], result[2]]
+            
+q.join()
 
-        with open('../potentials.txt', 'w') as outfile:
-            json.dump(potentials, outfile)
-            outfile.close()
+with open('../potentials.txt', 'w') as outfile:
+    json.dump(potentials, outfile)
+    outfile.close()
 
-#print(evaluate([Card.new("Ts"), Card.new("9h")], 7, 2))
     
     
 
