@@ -10,6 +10,7 @@ import threading
 import multiprocessing
 from deuces import Card, Evaluator
 import json
+import copy 
 
 core_count = 2
 
@@ -21,22 +22,20 @@ evaluator = Evaluator()
 potential_times = []
 pre_return = []
 
-def evaluate(output_file, hand_cards, length, original_length):
+def evaluate(output_file, hand_cards, length, original_length, count):
     
-    if len(hand_cards) == original_length:
-        print("Start: " + Card.print_pretty_cards(hand_cards))
-        potential_times.append(time.time())
+    print("Start: " + Card.print_pretty_cards(hand_cards))
+    potential_times.append(time.time())
         
-    strengths = []
     
-    if length > len(hand_cards):
+    remaining_cards = copy.deepcopy(cards)
+    for card in hand_cards:
+        remaining_cards.remove(card)   
         
-        for card in cards:  
-            if card not in hand_cards:
-                strengths += evaluate(output_file, hand_cards + [card], length, original_length)
-
-    if length == len(hand_cards):
-        output_file.write(str(evaluator.evaluate(hand_cards[0:2], hand_cards[2:len(hand_cards)])) + ",")
+    for card_combo in itertools.combinations(remaining_cards, length - original_length):  
+        possible_hand = hand_cards + list(card_combo)
+        
+        output_file.write(str(evaluator.evaluate(possible_hand[0:2], possible_hand[2:len(possible_hand)])) + ",")
     
     if len(hand_cards) == original_length:
         print("potential calc complete")
@@ -44,20 +43,17 @@ def evaluate(output_file, hand_cards, length, original_length):
         print("Time: " + str(difference))          
         print("pre-return calculations")
         pre_return.append(time.time())
+        print(count)
+       
         
-        
-        return
-
-    else:
-        return strengths
-
+    return
 
     
 def worker():
     while True:
         this_hand = q.get()
         with open ("hands/" + Card.print_pretty_cards(this_hand).replace(" ", "_") + ".txt", "w") as output_file:
-            result = evaluate(output_file, this_hand, 7, 2)
+            result = evaluate(output_file, this_hand, 5, 2, 0)
             output_file.close()
         q.task_done()
         
@@ -72,7 +68,7 @@ with open ("../hands.txt", "r") as f:
         
     cpus=multiprocessing.cpu_count() #detect number of cores
     print("Creating %d threads" % cpus)
-    for i in range(cpus):
+    for i in range(cpus - 3):
         t = threading.Thread(target=worker)
         t.daemon = True
         t.start()
