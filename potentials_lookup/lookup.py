@@ -21,7 +21,7 @@ evaluator = Evaluator()
 potential_times = []
 pre_return = []
 
-def evaluate(hand_cards, length, original_length):
+def evaluate(output_file, hand_cards, length, original_length):
     
     if len(hand_cards) == original_length:
         print("Start: " + Card.print_pretty_cards(hand_cards))
@@ -33,10 +33,10 @@ def evaluate(hand_cards, length, original_length):
         
         for card in cards:  
             if card not in hand_cards:
-                strengths += evaluate(hand_cards + [card], length, original_length)
+                strengths += evaluate(output_file, hand_cards + [card], length, original_length)
 
     if length == len(hand_cards):
-        strengths.append(evaluator.evaluate(hand_cards[0:2], hand_cards[2:len(hand_cards)])) 
+        output_file.write(str(evaluator.evaluate(hand_cards[0:2], hand_cards[2:len(hand_cards)])) + ",")
     
     if len(hand_cards) == original_length:
         print("potential calc complete")
@@ -45,25 +45,9 @@ def evaluate(hand_cards, length, original_length):
         print("pre-return calculations")
         pre_return.append(time.time())
         
-        probability = 1
-        for depth in range(len(hand_cards), length):
-            probability *= 1/(float(52 - depth))
-            
-        mean = sum(strengths)*probability
         
-        
-        standard_deviation = 0
-        for x in strengths:
-            standard_deviation += x**2  
-        standard_deviation *= probability
-        standard_deviation -=  mean**2
-        
-        print("pre-return complete")
-        difference = time.time() - pre_return.pop()
-        print("Time: " + str(difference))
-        print("End: " + Card.print_pretty_cards(hand_cards))
+        return
 
-        return (hand_cards, mean, standard_deviation)
     else:
         return strengths
 
@@ -72,16 +56,12 @@ def evaluate(hand_cards, length, original_length):
 def worker():
     while True:
         this_hand = q.get()
-        result = evaluate(this_hand, 5, 2)
-        print("Result:")
-        print(result)
-        potentials[Card.print_pretty_cards(result[0])] = [result[1], result[2]]
+        with open ("hands/" + Card.print_pretty_cards(this_hand).replace(" ", "_") + ".txt", "w") as output_file:
+            result = evaluate(output_file, this_hand, 7, 2)
+            output_file.close()
         q.task_done()
         
-potentials = {}
-with open('../potentials.txt', 'r') as infile:
-    potentials = json.load(infile)
-    infile.close()
+
 
 with open ("../hands.txt", "r") as f:
     hands = f.read().split(",")
@@ -100,9 +80,7 @@ with open ("../hands.txt", "r") as f:
             
 q.join()
 
-with open('../potentials.txt', 'w') as outfile:
-    json.dump(potentials, outfile)
-    outfile.close()
+
 
     
     
