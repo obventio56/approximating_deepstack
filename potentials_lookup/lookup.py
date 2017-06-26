@@ -68,7 +68,7 @@ with open ("../hands.txt", "r") as f:
         
     cpus=multiprocessing.cpu_count() #detect number of cores
     print("Creating %d threads" % cpus)
-    for i in range(cpus - 3):
+    for i in range(cpus):
         t = threading.Thread(target=worker)
         t.daemon = True
         t.start()
