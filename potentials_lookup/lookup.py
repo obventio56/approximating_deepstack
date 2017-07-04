@@ -11,6 +11,8 @@ import multiprocessing
 from deuces import Card, Evaluator
 import json
 import copy 
+import operator as op
+from functools import reduce
 
 core_count = 2
 
@@ -21,6 +23,29 @@ evaluator = Evaluator()
 
 potential_times = []
 pre_return = []
+
+two_card_lookup = {}
+
+with open('../two_card_lookup.json') as data_file:    
+    two_card_lookup = json.load(data_file)
+    
+three_card_lookup = {}
+
+with open('../flops.json') as data_file:    
+    three_card_lookup = json.load(data_file)
+    
+four_card_lookup = {}
+
+with open('../turns.json') as data_file:    
+    four_card_lookup = json.load(data_file)
+    
+    
+two_card_potentials = {}
+
+with open('../potentials.json') as data_file:    
+    two_card_potentials = json.load(data_file)
+    
+
 
 def evaluate(output_file, hand_cards, length, original_length, count):
     
@@ -58,26 +83,87 @@ def worker():
         q.task_done()
         
 
+def main():
+    with open ("../hands.txt", "r") as f:
+        hands = f.read().split(",")
+        q = queue.Queue()
+        for hand in hands:
+            deuces_hand = [Card.new(card) for card in hand.split(" ")]
+            q.put(deuces_hand)
 
-with open ("../hands.txt", "r") as f:
-    hands = f.read().split(",")
-    q = queue.Queue()
-    for hand in hands:
-        deuces_hand = [Card.new(card) for card in hand.split(" ")]
-        q.put(deuces_hand)
+        cpus=multiprocessing.cpu_count() #detect number of cores
+        print("Creating %d threads" % cpus)
+        for i in range(cpus):
+            t = threading.Thread(target=worker)
+            t.daemon = True
+            t.start()
+
+
+    q.join()
+
+
+if __name__ == "__main__":
+    main()
+    
+def order_cards(card):
+    return cards.index(Card.new(card))
+ 
+def hand_strength(hand_cards, community):
+    if len(community) == 0:
+        hand_cards.sort(key=order_cards)
+        return two_card_lookup[" ".join(hand_cards)]
+    elif len(community) == 3 and len(hand_cards) == 0:
+        community.sort(key=order_cards)
+        return three_card_lookup[" ".join(hand_cards)]
+    elif len(community) == 4 and len(hand_cards) == 0:
+        community.sort(key=order_cards)
+        return four_card_lookup[" ".join(hand_cards)]      
+    else: 
+        deuces_cards = [Card.new(card) for card in hand_cards]
+        deuces_community = [Card.new(card) for card in community]
+        return evaluator.evaluate(deuces_cards, deuces_community)
+    
+def hand_potential(hand_cards, community):
+    if len(community) == 0:
+        hand_cards.sort(key=order_cards)
+        mean, std = tuple(two_card_potentials["_".join(hand_cards)])
+        return mean, -1*std
+    elif len(community) != 5:
+        strengths = []
         
-    cpus=multiprocessing.cpu_count() #detect number of cores
-    print("Creating %d threads" % cpus)
-    for i in range(cpus):
-        t = threading.Thread(target=worker)
-        t.daemon = True
-        t.start()
+        all_cards = hand_cards + community
+        all_cards = [Card.new(card) for card in all_cards]
+        
+        remaining_cards = copy.deepcopy(cards)
+        for card in all_cards:
+            remaining_cards.remove(card) 
             
-            
-q.join()
+        for card_combo in itertools.combinations(remaining_cards, 7 - len(all_cards)): 
+            possible_hand = all_cards + list(card_combo) 
+            strengths.append(evaluator.evaluate(possible_hand[0:2], possible_hand[2:len(possible_hand)]))
+
+        probability = 1.0/ncr(len(remaining_cards), 7 - len(all_cards))
+    
+        mean = sum(strengths)*probability
 
 
-
+        standard_deviation = 0.0
+        for x in strengths:
+            standard_deviation += x**2 
+        standard_deviation *= probability
+        standard_deviation -=  mean**2
+        
+        return float(mean)/7462, standard_deviation
+    else:
+        return hand_strength(hand_cards, community), 0
+    
+def ncr(n, r):
+    r = min(r, n-r)
+    if r == 0: return 1
+    numer = reduce(op.mul, range(n, n-r, -1))
+    denom = reduce(op.mul, range(1, r+1))
+    return numer//denom
+        
     
     
 

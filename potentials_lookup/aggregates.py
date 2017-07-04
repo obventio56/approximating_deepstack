@@ -17,7 +17,7 @@ for fn in os.listdir('hands'):
 
         standard_deviation = 0
         for x in strengths:
-            standard_deviation += x**2  
+            standard_deviation += x**2 
         standard_deviation *= probability
         standard_deviation -=  mean**2
 
