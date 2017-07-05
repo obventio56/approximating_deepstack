@@ -3,7 +3,7 @@ sys.path.insert(0,'..')
 import pickle
 import game
 import time
-
+import json
 
 # Input data:
 #    Position (0 or 1) +
