@@ -40,6 +40,7 @@ for game_index, game in enumerate(games):
         for subround, _ in enumerate(game.deepstack.moves[betting_round]):
             this_x = game.deepstack.generate_data(betting_round, subround)
             this_target = game.deepstack.generate_target(betting_round, subround)
+            print(this_x)
             input_data.append(this_x)
             target_data.append(this_target)
             
