@@ -215,6 +215,7 @@ class Agent(object):
         else:
             data.append(-1)
             data += [-1,-1]
+        return data
 
 
     def generate_target(self, end_betting_round, end_subround):
