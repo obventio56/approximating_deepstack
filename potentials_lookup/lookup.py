@@ -156,6 +156,7 @@ def hand_potential(hand_cards, community):
         strengths = []
         
         all_cards = hand_cards + community
+
         all_cards = [Card.new(card) for card in all_cards]
         
         remaining_cards = copy.deepcopy(cards)
@@ -164,6 +165,7 @@ def hand_potential(hand_cards, community):
             
         for card_combo in itertools.combinations(remaining_cards, 7 - len(all_cards)): 
             possible_hand = all_cards + list(card_combo) 
+
             strengths.append(evaluator.evaluate(possible_hand[0:2], possible_hand[2:len(possible_hand)]))
 
         probability = 1.0/len(strengths)
