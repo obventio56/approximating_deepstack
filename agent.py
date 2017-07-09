@@ -193,6 +193,7 @@ class Agent(object):
             
         return self_aggressivness, other_player_aggressivness
     
+    
     def generate_data(self, end_betting_round, end_subround):
         
         game = self.game
@@ -209,6 +210,7 @@ class Agent(object):
         community_cards = sum(game.all_cards[0:end_betting_round - 1], [])
         data.append(lookup.hand_strength(self.cards, community_cards))
         data += list(lookup.hand_potential(self.cards, community_cards))
+        print(community_cards, self.cards)
         if len(community_cards) > 0:
             data.append(lookup.hand_strength([], community_cards))
             data += list(lookup.hand_potential([], community_cards))
@@ -217,6 +219,7 @@ class Agent(object):
             data += [-1,-1]
         return data
 
+    
 
     def generate_target(self, end_betting_round, end_subround):
         

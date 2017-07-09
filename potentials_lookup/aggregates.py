@@ -10,7 +10,7 @@ for fn in os.listdir('hands'):
     with open ("hands/" + fn) as strengths_file:
         strengths = [int(val) for val in strengths_file.read().split(",") if val != '']
         print(len(strengths))
-        probability = 1/float(19600)
+        probability = 1/len(strengths)
 
         mean = sum(strengths)*probability
 
