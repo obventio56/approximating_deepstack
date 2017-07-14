@@ -242,7 +242,8 @@ class Agent(object):
         elif move == "c":
             amount_bet = last_raise - second_raise
 
-        return (amount_bet/float(pot) if pot > 0 else 0)
+        aggressivness = (amount_bet/float(pot) if pot > 0 else 0)
+        return aggressivness
                 
         
         
