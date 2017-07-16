@@ -5,5 +5,5 @@ import game
 
 games = pickle.load( open( "../games.p", "rb" ) )
 
-for game in games:
-    print(game.id)
+
+print(games[0].deepstack.moves)

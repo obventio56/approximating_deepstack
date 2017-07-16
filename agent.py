@@ -65,19 +65,31 @@ class Agent(object):
         self.occurred_moves, other_player.occurred_moves = self.pertinant_moves(end_betting_round, end_subround)
         just_raises = helpers.sorted_raises(self.occurred_moves, other_player.occurred_moves)
         
+        print("occurred_moves")
+        print(self.occurred_moves, other_player.occurred_moves)
+        
         if len(other_player.occurred_moves) < 1:
             return (self.chips, other_player.chips, pot)
         else:
             last_move = other_player.occurred_moves.pop()  if len(other_player.occurred_moves) > 0 else 'r0'
-
+            self_last_move = other_player.occurred_moves.pop()  if len(other_player.occurred_moves) > 0 else 'r0'
+            
             last_raise = just_raises.pop() if len(just_raises) > 0 else 0
             second_raise = just_raises.pop() if len(just_raises) > 0 else 0
             
             other_pot = last_raise
             self_pot = other_pot
+            print(last_move, last_raise)
             if (last_move[0] == "r"):
-                self_pot = second_raise
+                if (end_subround != 0 or self.position != 0): #if it's not the first subround or not the first player,
+                                                              #the bet hasn't been called
+                    self_pot = second_raise
 
+            if end_betting_round == 1 and end_subround == 0:
+                if self.position == 1: self_pot = 50.0
+                if self.position == 0: 
+                    self_pot = 100.0
+                    other_pot = 50.0
 
             pot += self_pot + other_pot
             self.chips -= self_pot
@@ -116,7 +128,21 @@ class Agent(object):
                 amount_bet = int(move[1:len(move)]) - last_raise
             elif move == "c":
                 amount_bet = last_raise - second_raise
-                
+            
+            #This bit handles the first round because the blinds are bassackwards
+            if betting_round == 1 and subround == 0:
+                if self.position == 0:
+                    pot = 150.0
+                    if move[0] == "r":
+                        amount_bet = int(move[1:len(move)]) - 100.0
+                    elif move == "c":
+                        amount_bet = 0.0 
+                elif self.position == 1:
+                    if move[0] == "r":
+                        amount_bet = int(move[1:len(move)]) - 50.0
+                    elif move == "c":
+                        amount_bet = last_raise - 50.0 
+            
             self_aggressivness.append(amount_bet/float(pot) if pot > 0 else 0)
         
         
@@ -131,6 +157,21 @@ class Agent(object):
                 amount_bet = int(move[1:len(move)]) - last_raise
             elif move == "c":
                 amount_bet = last_raise - second_raise
+                
+            #This bit handles the first round because the blinds are bassackwards
+            if betting_round == 1 and subround == 0:
+                if other_player.position == 0:
+                    pot = 150.0
+                    if move[0] == "r":
+                        amount_bet = int(move[1:len(move)]) - 100.0
+                    elif move == "c":
+                        amount_bet = 0.0 
+                elif other_player.position == 1:
+                    if move[0] == "r":
+                        amount_bet = int(move[1:len(move)]) - 50.0
+                    elif move == "c":
+                        amount_bet = last_raise - 50.0 
+                
             other_player_aggressivness.append(amount_bet/float(pot) if pot > 0 else 0)
           
     
@@ -153,23 +194,42 @@ class Agent(object):
         self_aggressivness, other_player_aggressivness = 0, 0
         
         self.relevant_moves, other_player.relevant_moves = self.pertinant_moves(end_betting_round, end_subround)
+        print(self.relevant_moves, other_player.relevant_moves)
         
         if len(self.relevant_moves) > 1:
             
             self_betting_round, self_subround = helpers.get_2_d_index(len(self.relevant_moves) - 1, self)
             
             move = self.relevant_moves[-1]
-
+            
             self_chips, other_player_chips, pot = self.current_standing(self_betting_round, self_subround)
 
+            print(self_chips, other_player_chips, pot)
+            
             amount_bet = 0
             last_raise = other_player.starting_chips - other_player_chips
             second_raise = self.starting_chips - self_chips
+            
 
             if move[0] == "r":
                 amount_bet = int(move[1:len(move)]) - last_raise
             elif move == "c":
                 amount_bet = last_raise - second_raise
+                
+                
+            #This bit handles the first round because the blinds are bassackwards
+            if self_betting_round == 1 and self_subround == 0:
+                if self.position == 0:
+                    pot = 150.0
+                    if move[0] == "r":
+                        amount_bet = int(move[1:len(move)]) - 100.0
+                    elif move == "c":
+                        amount_bet = 0.0 
+                elif self.position == 1:
+                    if move[0] == "r":
+                        amount_bet = int(move[1:len(move)]) - 50.0
+                    elif move == "c":
+                        amount_bet = last_raise - 50.0 
 
             self_aggressivness = (amount_bet/float(pot) if pot > 0 else 0)
         
@@ -180,14 +240,30 @@ class Agent(object):
             move = other_player.relevant_moves[-1]
 
             self_chips, other_player_chips, pot = other_player.current_standing(other_player_betting_round, other_player_subround)
+            print(other_player_betting_round, other_player_subround)
+            print(move, self_chips, other_player_chips, pot)
             amount_bet = 0
             last_raise = self.starting_chips - other_player_chips
-            second_raise = other_player.starting_chips - self_chips
+            second_raise = other_player.starting_chips - self_chips   
 
             if move[0] == "r":
                 amount_bet = int(move[1:len(move)]) - last_raise
             elif move == "c":
                 amount_bet = last_raise - second_raise
+                
+            #This bit handles the first round because the blinds are bassackwards
+            if other_player_betting_round == 1 and other_player_subround == 0: 
+                if other_player.position == 0:
+                    pot = 150.0
+                    if move[0] == "r":
+                        amount_bet = int(move[1:len(move)]) - 100.0
+                    elif move == "c":
+                        amount_bet = 0.0 
+                elif other_player.position == 1:
+                    if move[0] == "r":
+                        amount_bet = int(move[1:len(move)]) - 50.0
+                    elif move == "c":
+                        amount_bet = last_raise - 50.0                   
             
             other_player_aggressivness = (amount_bet/float(pot) if pot > 0 else 0)
             
@@ -200,6 +276,7 @@ class Agent(object):
         
         data = []
         
+        data += [game.id, game.other_player_name]
         data += [self.position, end_betting_round, end_subround]
         self_chips, other_chips, pot = self.current_standing(end_betting_round, end_subround)
         data += [self_chips, other_chips, pot]
@@ -210,7 +287,6 @@ class Agent(object):
         community_cards = sum(game.all_cards[0:end_betting_round - 1], [])
         data.append(lookup.hand_strength(self.cards, community_cards))
         data += list(lookup.hand_potential(self.cards, community_cards))
-        print(community_cards, self.cards)
         if len(community_cards) > 0:
             data.append(lookup.hand_strength([], community_cards))
             data += list(lookup.hand_potential([], community_cards))
@@ -241,6 +317,20 @@ class Agent(object):
             amount_bet = int(move[1:len(move)]) - last_raise
         elif move == "c":
             amount_bet = last_raise - second_raise
+            
+        #This bit handles the first round because the blinds are bassackwards
+        if end_betting_round == 1 and end_subround == 0:
+            if self.position == 0:
+                pot = 150.0
+                if move[0] == "r":
+                    amount_bet = int(move[1:len(move)]) - 100.0
+                elif move == "c":
+                    amount_bet = 0.0 
+            elif self.position == 1:
+                if move[0] == "r":
+                    amount_bet = int(move[1:len(move)]) - 50.0
+                elif move == "c":
+                    amount_bet = last_raise - 50.0 
 
         aggressivness = (amount_bet/float(pot) if pot > 0 else 0)
         return aggressivness

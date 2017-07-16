@@ -11,7 +11,7 @@ from sklearn.pipeline import Pipeline
 def baseline_model():
 	# create model
 	model = Sequential()
-	model.add(Dense(17, input_dim=17, kernel_initializer='normal', activation='relu'))
+	model.add(Dense(16, input_dim=16, kernel_initializer='normal', activation='relu'))
 	model.add(Dense(8, kernel_initializer='normal'))
 	model.add(Dense(4, kernel_initializer='normal'))
 	model.add(Dense(1, kernel_initializer='normal'))
@@ -32,6 +32,9 @@ def main():
     with open('../target.json') as data_file:    
         Y = json.load(data_file)
         
+        
+    X = [x[2:len(x)] for x in X]
+    
     y_values = []
     x_values = []
     np_Y = np.array(Y)
@@ -53,12 +56,12 @@ def main():
     estimators.append(('mlp', KerasRegressor(build_fn=baseline_model, epochs=34, batch_size=25, verbose=2)))
     pipeline = Pipeline(estimators)
     kfold = KFold(n_splits=5, random_state=seed)
-    #results = cross_val_score(pipeline, x_values, y_values, cv=kfold)
-    pipeline.fit(x_values[0:5000], y_values[0:5000])
-    #print("Standardized: %.2f (%.2f) MSE" % (results.mean(), results.std()))
-    print(pipeline.score(x_values[5000:10000], y_values[5000:10000]))
-    print(list(pipeline.predict(x_values[5010:5030])))
-    print(y_values[5010:5030])
+    results = cross_val_score(pipeline, x_values, y_values, cv=kfold)
+    pipeline.fit(x_values[0:900], y_values[0:900])
+    print("Standardized: %.2f (%.2f) MSE" % (results.mean(), results.std()))
+    #print(pipeline.score(x_values[450:900], y_values[450:900]))
+    print(list(pipeline.predict(x_values[900:910])))
+    print(y_values[900:9010])
     
 if __name__ == "__main__":
     main()

@@ -27,3 +27,13 @@ def get_2_d_index(moves, player):
             end_betting_round += 1
         else: break
     return end_betting_round, moves
+
+def combine_moves(first_player_moves, last_player_moves, first_player_id, last_player_id):
+    all_moves = []
+    max_moves = max(len(first_player_moves), len(last_player_moves))
+    
+    for move in range(0, max_moves):
+        if len(first_player_moves) > move: all_moves.append([first_player_moves[move], first_player_id])
+        if len(last_player_moves) > move: all_moves.append([last_player_moves[move], last_player_id])
+        
+    return all_moves
