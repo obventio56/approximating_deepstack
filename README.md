@@ -4,6 +4,9 @@ Deuces
 A pure Python poker hand evaluation library
 
     [ 2 ❤ ] , [ 2 ♠ ]
+	
+
+updated for python3 now (20201025)!
     
 ## Installation
 
@@ -11,24 +14,26 @@ A pure Python poker hand evaluation library
 $ pip install deuces
 ```
 
+then copy deuces/*.py from this repo to recover the files in your computer
+
 ## Implementation notes
 
 Deuces, originally written for the MIT Pokerbots Competition, is lightweight and fast. All lookups are done with bit arithmetic and dictionary lookups. That said, Deuces won't beat a C implemenation (~250k eval/s) but it is useful for situations where Python is required or where bots are allocated reasonable thinking time (human time scale).
 
 Deuces handles 5, 6, and 7 card hand lookups. The 6 and 7 card lookups are done by combinatorially evaluating the 5 card choices, but later releases may have dedicated and faster algorithms for these. 
 
-I also have lookup tables for 2 card rollouts, which is particularly handy in evaluating Texas Hold'em preflop pot equity, but they are forthcoming as well. 
+2 card lookups has added now(20201025)
 
 See my blog for an explanation of how the library works and how the lookup table generation is done:
-http://willdrevo.com/ (haven't posted yet)
+http://willdrevo.com/ 
 
 ## Usage
 
 Deuces is easy to set up and use. 
 
 ```python
->>> from deuces import Card
->>> card = Card.new('Qh')
+from deuces import Card
+card = Card.new('Qh')
 ```
 
 Card objects are represented as integers to keep Deuces performant and lightweight. 
@@ -36,21 +41,37 @@ Card objects are represented as integers to keep Deuces performant and lightweig
 Now let's create the board and an example Texas Hold'em hand:
 
 ```python
->>> board = [
->>>     Card.new('Ah'),
->>>     Card.new('Kd'),
->>>     Card.new('Jc')
->>> ]
->>> hand = [
->>>    Card.new('Qs'),
->>>    Card.new('Th')
->>> ]
+board = [
+	Card.new('Ah'),
+	Card.new('Kd'),
+	Card.new('Jc')
+	]
+hand = [
+	Card.new('Qs'),
+	Card.new('Th')
+	]
+```
+
+or
+
+```python
+board = [ Card.new(x) for x in ['Ah','Kd','Jc']]
+hand = [ Card.new(x) for x in ['Qs','Th']]
 ```
 
 Pretty print card integers to the terminal: 
 
-    >>> Card.print_pretty_cards(board + hand)
+```python
+   Card.print_pretty_cards(board + hand)
+```
       [ A ❤ ] , [ K ♦ ] , [ J ♣ ] , [ Q ♠ ] , [ T ❤ ] 
+	  
+print plain text to terminal may be avoid bugs caused by color set
+
+```python
+   Card.print_plain_cards(board + hand)
+```
+      ['Ah','Kd','Jc','Qs','Th']
 
 If you have [`termacolor`](http://pypi.python.org/pypi/termcolor) installed, they will be colored as well. 
 
@@ -62,15 +83,17 @@ Otherwise move straight to evaluating your hand strength:
 1600
 ```
 
-Hand strength is valued on a scale of 1 to 7462, where 1 is a Royal Flush and 7462 is unsuited 7-5-4-3-2, as there are only 7642 distinctly ranked hands in poker. Once again, refer to my blog post for a more mathematically complete explanation of why this is so. 
+Hand strength is valued on a scale of 1 to 7462 for 5 best cards, where 1 is a Royal Flush and 7462 is unsuited 7-5-4-3-2, as there are only 7462 distinctly ranked hands in poker. 
+
+hand strength is valued on a scale of 1 to 169 for 2 hand cards, where 1 is a "AA" and 169 is unsuited "3-2"
 
 If you want to deal out cards randomly from a deck, you can also do that with Deuces:
 ```python
->>> from deuces import Deck
->>> deck = Deck()
->>> board = deck.draw(5)
->>> player1_hand = deck.draw(2)
->>> player2_hand = deck.draw(2)
+from deuces import Deck
+deck = Deck()
+board = deck.draw(5)
+player1_hand = deck.draw(2)
+player2_hand = deck.draw(2)
 ```
 and print them:
 
@@ -83,10 +106,10 @@ and print them:
 
 Let's evaluate both hands strength, and then bin them into classes, one for each hand type (High Card, Pair, etc)
 ```python
->>> p1_score = evaluator.evaluate(board, player1_hand)
->>> p2_score = evaluator.evaluate(board, player2_hand)
->>> p1_class = evaluator.get_rank_class(p1_score)
->>> p2_class = evaluator.get_rank_class(p2_score)
+p1_score = evaluator.evaluate(board, player1_hand)
+p2_score = evaluator.evaluate(board, player2_hand)
+p1_class = evaluator.get_rank_class(p1_score)
+p2_class = evaluator.get_rank_class(p2_score)
 ```
 or get a human-friendly string to describe the score,
 
